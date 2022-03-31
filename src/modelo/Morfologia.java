@@ -10,6 +10,198 @@ public class Morfologia extends PanelDaImagem {
 	/**
      * Subtrai duas imagens do mesmo tamanho. Considera a imagem em tons de cinza.
      */
+	
+	
+    /**
+     * Aplica a dilatação x vezes.
+     */
+    
+    public BufferedImage dilate(BufferedImage img, int x, boolean[][] kernel) {
+        BufferedImage out = img;
+        for (int i = 0; i < x; i++) {
+            out = dilatar(out, kernel);
+        }
+        exibir(out.getRaster());
+        return out;
+    }
+    
+    
+    /**
+     * Operação de dilatação morfológica.
+     * Nesta operação buscamos entre o pixel e seus vizinhos aqueles com o tom de cinza mais claro (de maior valor).
+     * Os pixels considerados na busca são aqueles marcados com true no kernel (pixels ativos).
+     */
+    
+    public BufferedImage dilatar(BufferedImage img, boolean[][] kernel) {
+        //Cria a imagem de saída
+        BufferedImage out = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_RGB);
+
+        //Percorre a imagem de entrada
+        for (int y = 0; y < img.getHeight(); y++) {
+            for (int x = 0; x < img.getWidth(); x++) {
+                //A dilatação busca pelo pixel de maior valor
+                int max = 0;
+                //Para cada pixel percorrido na imagem, precisamos percorrer os seus 9 vizinhos
+                //Os vizinhos que serão considerados estão marcados como true no kernel
+                for (int ky = 0; ky < 3; ky++) {
+                    for (int kx = 0; kx < 3; kx++) {
+                        int px = x + (kx-1);
+                        int py = y + (ky-1);
+
+                        //Nas bordas, px ou py podem acabar caindo fora da imagem. Quando isso ocorre, pulamos para o
+                        // próximo pixel.
+                        if (px < 0 || px >= img.getWidth() || py < 0 || py >= img.getHeight()) {
+                            continue;
+                        }
+                        //Obtem o tom de cinza do pixel e se for mais claro que o maior já encontrado, substitui
+                        int tone = new Color(img.getRGB(px, py)).getRed();
+                        if (kernel[kx][ky] && tone > max) {
+                            max = tone;
+                        }
+                    }
+                }
+                //Define essa cor na imagem de saída.
+                out.setRGB(x, y, new Color(max, max, max).getRGB());
+            }
+        }
+        return out;
+    }
+    
+    
+    
+    /**
+     * Aplica a erosao x vezes.
+     */
+    
+    public BufferedImage erode(BufferedImage img, int x, boolean[][] kernel) {
+        BufferedImage out = img;
+        for (int i = 0; i < x; i++) {
+            out = erodir(out, kernel);
+        }
+        exibir(out.getRaster());
+        return out;
+    }
+    
+    
+    
+    /**
+     * Operação de erosão morfológica.
+     * Nesta operação buscamos entre o pixel e seus vizinhos aqueles com o tom de cinza mais escuro (de menor valor).
+     * Os pixels considerados na busca são aqueles marcados com true no kernel.
+     */
+    public BufferedImage erodir(BufferedImage img, boolean[][] kernel) {
+        //Cria a imagem de saída
+        BufferedImage out = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_RGB);
+
+        //Percorre a imagem de entrada
+        for (int y = 0; y < img.getHeight(); y++) {
+            for (int x = 0; x < img.getWidth(); x++) {
+                //A erosão busca pelo pixel de menor valor
+                int min = 255;
+                //Para cada pixel percorrido na imagem, precisamos percorrer os seus 8 vizinhos
+                //Os vizinhos que serão considerados estão marcados como true no kernel
+                for (int ky = 0; ky < 3; ky++) {
+                    for (int kx = 0; kx < 3; kx++) {
+                        //Observe que os índices de kx e ky variam de 0 até 2. Já os vizinhos de x seriam
+                        //x+(-1), x+0 + x+1. Por isso, subtraímos 1 de kx e ky para chegar no vizinho.
+                        int px = x + (kx-1);
+                        int py = y + (ky-1);
+
+                        //Nas bordas, px ou py podem acabar caindo fora da imagem. Quando isso ocorre, pulamos para o
+                        // próximo pixel.
+                        if (px < 0 || px >= img.getWidth() || py < 0 || py >= img.getHeight()) {
+                            continue;
+                        }
+
+                        //Obtem o tom de cinza do pixel
+                        int tone = new Color(img.getRGB(px, py)).getRed();
+
+                        //Se ele for mais escuro que o menor já encontrado, substitui
+                        if (kernel[kx][ky] && tone < min) {
+                            min = tone;
+                        }
+                    }
+                }
+
+                //Define essa cor na imagem de saída.
+                out.setRGB(x, y, new Color(min, min, min).getRGB());
+            }
+        }
+        return out;
+    }
+	
+	
+    /**
+     * Operação de gradiente morfológico binario.
+     */
+    
+    public int[][] gradMorfBin(int largura, int altura, int[][] matrizImagem, int[][] elementoEstruturante) {
+    	int p0 = 0;
+      	int p255 = 0;
+      	int pNovo = 0;
+      	int pNovo2 = 255;
+      	// Média Padrão (limiar 127), Nível Médio de Cinza (limiar 94), 10% de Preto (limiar 28),
+      	// Seleção Iterativa (limiar 82), Otsu (limiar 83), Dois Picos (limiar 109), Borda (limiar 127), 
+      	// Pun (limiar 51), Kapur (limiar 162).
+      	//percorre toda imagem pixel a pixel para transformar em binaria
+      	for (int y = 0; y < largura; y++) {
+      		for (int x = 0; x < altura; x++) {
+      			if (matrizImagem[x][y] >= 127) {
+      				matrizImagem[x][y] = 255;
+      				p255++;
+      			}else {
+      				matrizImagem[x][y] = 0;
+      				p0++;
+      			}
+      		}
+      	}
+      	if (p0 > p255) {
+      		pNovo = 255;
+      		pNovo2 = 0;
+      	}
+      	int[][] parcial = dilatarBin(largura, altura, matrizImagem, elementoEstruturante);
+      	int[][] parcial2 = erodirBin(largura, altura, matrizImagem, elementoEstruturante);
+      	
+      	// retirando os pixels ativos que pertencem a imagem parcial2 da parcial
+      	for (int i = 0; i < matrizImagem.length; i++) {
+      		for (int j = 0; j < matrizImagem.length; j++) {
+				if (parcial2[i][j] == pNovo && parcial[i][j] == pNovo) {
+					parcial[i][j] = pNovo2;
+				}
+			}
+		}
+      	exibirBin(parcial, matrizImagem);
+        return parcial;
+    }
+    
+    
+    /**
+     * Abertura morfológica.
+     * Trata-se de várias erosões seguidas do mesmo número de dilatações. Isso faz com que áreas pequenas da imagem
+     * tendam a desaparecer, e estruturas maiores sejam mantidas.
+     */
+    
+    public BufferedImage abertura(BufferedImage img, int x, boolean[][] kernel) {
+        BufferedImage c = dilate(erode(img, x, kernel), x, kernel);
+        exibir(c.getRaster());
+    	return c;
+    }
+    
+    
+    
+    /**
+     * Fechamento morfológico.
+     * Trata-se de várias dilatações seguidas do mesmo número de erosões. Isso faz com que "buracos" pequenos na imagem
+     * tendam a desaparecer.
+     */
+    
+    public BufferedImage fechamento(BufferedImage img, int times, boolean[][] kernel) {
+    	BufferedImage c = erode(dilate(img, times, kernel), times, kernel);
+    	exibir(c.getRaster());
+    	return c;
+    }
+    
+   
     public BufferedImage subtract(BufferedImage img1, BufferedImage img2) {
         //Cria a imagem de saída
         BufferedImage out = new BufferedImage(img1.getWidth(), img1.getHeight(), BufferedImage.TYPE_INT_RGB);
@@ -33,6 +225,9 @@ public class Morfologia extends PanelDaImagem {
         return out;
     }
     
+    
+
+    
     /**
      * Operação de dilatação morfológica binaria.
      */
@@ -50,9 +245,6 @@ public class Morfologia extends PanelDaImagem {
       	int pNovo = 0;
       	int pNovo2 = 255;
       	
-      // Média Padrão (limiar 127), Nível Médio de Cinza (limiar 94), 10% de Preto (limiar 28),
-      // Seleção Iterativa (limiar 82), Otsu (limiar 83), Dois Picos (limiar 109), Borda (limiar 127), 
-      // Pun (limiar 51), Kapur (limiar 162).
       //percorre toda imagem pixel a pixel para transformar em binaria
       	for (int y = 0; y < largura; y++) {
       		for (int x = 0; x < altura; x++) {
@@ -104,6 +296,7 @@ public class Morfologia extends PanelDaImagem {
       	exibirBin(matrizImagemBinaria, matrizImagem);
         return matrizImagemBinaria;
     }
+    
     
     /**
      * Operação de erosão morfológica binaria.
@@ -170,7 +363,6 @@ public class Morfologia extends PanelDaImagem {
       			
        		}
     	}
-      	
       	exibirBin(matrizImagemBinaria, matrizImagem);
         return matrizImagemBinaria;
     }
@@ -336,6 +528,7 @@ public class Morfologia extends PanelDaImagem {
       	// Seleção Iterativa (limiar 82), Otsu (limiar 83), Dois Picos (limiar 109), Borda (limiar 127), 
       	// Pun (limiar 51), Kapur (limiar 162).
       	//percorre toda imagem pixel a pixel para transformar em binaria
+      	
       	for (int y = 0; y < largura; y++) {
       		for (int x = 0; x < altura; x++) {
       			if (matrizImagem[x][y] >= 127) {
@@ -373,13 +566,13 @@ public class Morfologia extends PanelDaImagem {
     /**
      * Operação de contorno interno binario.
      */
+    
     public int[][] contIntBin(int largura, int altura, int[][] matrizImagem, int[][] elementoEstruturante) {
     	int p0 = 0;
       	int p255 = 0;
       	int pNovo = 0;
       	int pNovo2 = 255;
       	
-     	
     	//matriz auxiliar
       	int[][] matrizImagemBinaria = new int[largura][altura];
     
@@ -422,190 +615,20 @@ public class Morfologia extends PanelDaImagem {
         return matrizImagemBinaria;
     }
     
-    /**
-     * Operação de gradiente morfológico binario.
-     */
-    public int[][] gradMorfBin(int largura, int altura, int[][] matrizImagem, int[][] elementoEstruturante) {
-    	int p0 = 0;
-      	int p255 = 0;
-      	int pNovo = 0;
-      	int pNovo2 = 255;
-     
-      	// Média Padrão (limiar 127), Nível Médio de Cinza (limiar 94), 10% de Preto (limiar 28),
-      	// Seleção Iterativa (limiar 82), Otsu (limiar 83), Dois Picos (limiar 109), Borda (limiar 127), 
-      	// Pun (limiar 51), Kapur (limiar 162).
-      	//percorre toda imagem pixel a pixel para transformar em binaria
-      	for (int y = 0; y < largura; y++) {
-      		for (int x = 0; x < altura; x++) {
-      			if (matrizImagem[x][y] >= 127) {
-      				matrizImagem[x][y] = 255;
-      				p255++;
-      			}else {
-      				matrizImagem[x][y] = 0;
-      				p0++;
+   
 
-      			}
-      		}
-      	}
-      	
-      	if (p0 > p255) {
-      		pNovo = 255;
-      		pNovo2 = 0;
-      	}
-      	
-      	int[][] parcial = dilatarBin(largura, altura, matrizImagem, elementoEstruturante);
-      	int[][] parcial2 = erodirBin(largura, altura, matrizImagem, elementoEstruturante);
-      	
-      	// retirando os pixels ativos que pertencem a imagem parcial2 da parcial
-      	for (int i = 0; i < matrizImagem.length; i++) {
-      		for (int j = 0; j < matrizImagem.length; j++) {
-				if (parcial2[i][j] == pNovo && parcial[i][j] == pNovo) {
-					parcial[i][j] = pNovo2;
-				}
-			}
-		}
-      	      	
-      	exibirBin(parcial, matrizImagem);
-        return parcial;
-    }
+
+
     
-    /**
-     * Operação de erosão morfológica.
-     * Nesta operação buscamos entre o pixel e seus vizinhos aqueles com o tom de cinza mais escuro (de menor valor).
-     * Os pixels considerados na busca são aqueles marcados com true no kernel.
-     */
-    public BufferedImage erodir(BufferedImage img, boolean[][] kernel) {
-        //Cria a imagem de saída
-        BufferedImage out = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_RGB);
 
-        //Percorre a imagem de entrada
-        for (int y = 0; y < img.getHeight(); y++) {
-            for (int x = 0; x < img.getWidth(); x++) {
-                //A erosão busca pelo pixel de menor valor
-                int min = 255;
-                //Para cada pixel percorrido na imagem, precisamos percorrer os seus 8 vizinhos
-                //Os vizinhos que serão considerados estão marcados como true no kernel
-                for (int ky = 0; ky < 3; ky++) {
-                    for (int kx = 0; kx < 3; kx++) {
-                        //Observe que os índices de kx e ky variam de 0 até 2. Já os vizinhos de x seriam
-                        //x+(-1), x+0 + x+1. Por isso, subtraímos 1 de kx e ky para chegar no vizinho.
-                        int px = x + (kx-1);
-                        int py = y + (ky-1);
 
-                        //Nas bordas, px ou py podem acabar caindo fora da imagem. Quando isso ocorre, pulamos para o
-                        // próximo pixel.
-                        if (px < 0 || px >= img.getWidth() || py < 0 || py >= img.getHeight()) {
-                            continue;
-                        }
 
-                        //Obtem o tom de cinza do pixel
-                        int tone = new Color(img.getRGB(px, py)).getRed();
-
-                        //Se ele for mais escuro que o menor já encontrado, substitui
-                        if (kernel[kx][ky] && tone < min) {
-                            min = tone;
-                        }
-                    }
-                }
-
-                //Define essa cor na imagem de saída.
-                out.setRGB(x, y, new Color(min, min, min).getRGB());
-            }
-        }
-        return out;
-    }
-
-    /**
-     * Operação de dilatação morfológica.
-     * Nesta operação buscamos entre o pixel e seus vizinhos aqueles com o tom de cinza mais claro (de maior valor).
-     * Os pixels considerados na busca são aqueles marcados com true no kernel (pixels ativos).
-     */
-    public BufferedImage dilatar(BufferedImage img, boolean[][] kernel) {
-        //Cria a imagem de saída
-        BufferedImage out = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_RGB);
-
-        //Percorre a imagem de entrada
-        for (int y = 0; y < img.getHeight(); y++) {
-            for (int x = 0; x < img.getWidth(); x++) {
-                //A dilatação busca pelo pixel de maior valor
-                int max = 0;
-                //Para cada pixel percorrido na imagem, precisamos percorrer os seus 9 vizinhos
-                //Os vizinhos que serão considerados estão marcados como true no kernel
-                for (int ky = 0; ky < 3; ky++) {
-                    for (int kx = 0; kx < 3; kx++) {
-                        //Observe que os índices de kx e ky variam de 0 até 2. Já os vizinhos de x seriam
-                        //x+(-1), x+0 + x+1. Por isso, subtraímos 1 de kx e ky para chegar no vizinho.
-                        int px = x + (kx-1);
-                        int py = y + (ky-1);
-
-                        //Nas bordas, px ou py podem acabar caindo fora da imagem. Quando isso ocorre, pulamos para o
-                        // próximo pixel.
-                        if (px < 0 || px >= img.getWidth() || py < 0 || py >= img.getHeight()) {
-                            continue;
-                        }
-
-                        //Obtem o tom de cinza do pixel
-                        int tone = new Color(img.getRGB(px, py)).getRed();
-
-                        //Se ele for mais claro que o maior já encontrado, substitui
-                        if (kernel[kx][ky] && tone > max) {
-                            max = tone;
-                        }
-                    }
-                }
-
-                //Define essa cor na imagem de saída.
-                out.setRGB(x, y, new Color(max, max, max).getRGB());
-            }
-        }
-        return out;
-    }
     
-    /**
-     * Abertura morfológica.
-     * Trata-se de várias erosões seguidas do mesmo número de dilatações. Isso faz com que áreas pequenas da imagem
-     * tendam a desaparecer, e estruturas maiores sejam mantidas.
-     */
-    public BufferedImage abertura(BufferedImage img, int times, boolean[][] kernel) {
-        BufferedImage c = dilate(erode(img, times, kernel), times, kernel);
-        exibir(c.getRaster());
-    	return c;
-    }
 
-    /**
-     * Fechamento morfológico.
-     * Trata-se de várias dilatações seguidas do mesmo número de erosões. Isso faz com que "buracos" pequenos na imagem
-     * tendam a desaparecer.
-     */
-    public BufferedImage fechamento(BufferedImage img, int times, boolean[][] kernel) {
-    	BufferedImage c = erode(dilate(img, times, kernel), times, kernel);
-    	exibir(c.getRaster());
-    	return c;
-    }
     
-    /**
-     * Aplica a dilatação times vezes.
-     */
-    public BufferedImage dilate(BufferedImage img, int times, boolean[][] kernel) {
-        BufferedImage out = img;
-        for (int i = 0; i < times; i++) {
-            out = dilatar(out, kernel);
-        }
-        exibir(out.getRaster());
-        return out;
-    }
+    
 
-    /**
-     * Aplica a erosao times vezes.
-     */
-    public BufferedImage erode(BufferedImage img, int times, boolean[][] kernel) {
-        BufferedImage out = img;
-        for (int i = 0; i < times; i++) {
-            out = erodir(out, kernel);
-        }
-        exibir(out.getRaster());
-        return out;
-    }
+
     
 
 	 /**

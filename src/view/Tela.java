@@ -93,9 +93,6 @@ public class Tela extends JFrame {
 		JMenuBar menuBar = new JMenuBar(); // barra de menu
 		setJMenuBar(menuBar);
 
-		//JMenu mnEfeitos = new JMenu("Efeitos"); // menu efeitos
-		//menuBar.add(mnEfeitos);
-
 		painelPrincipal = new JPanel();
 		painelPrincipal.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(painelPrincipal);
@@ -123,7 +120,7 @@ public class Tela extends JFrame {
 				panelDaImagem_ef.setBounds(0, 0, 256, 256);
 				panelDaImagem_ef.setVisible(efeitos1);
 				panel_3.add(panelDaImagem_ef);
-				double gamma = 1;
+				double gamma = 1.05;
 				gamma = Double.parseDouble(JOptionPane.showInputDialog("Gamma: ", gamma));
 
 				panelDaImagem_ef.gamma(panelDaImagem1.largura, panelDaImagem1.altura,
@@ -168,11 +165,11 @@ public class Tela extends JFrame {
 				// centro dos valores de cinza
 				int w = Integer.parseInt(JOptionPane.showInputDialog("Preencha com o valor w", "127"));
 				// e 𝜎 a largura da janela
-				int sigma = Integer.parseInt(JOptionPane.showInputDialog("Preencha com o valor 𝜎 ", "25"));
+				int sigma = Integer.parseInt(JOptionPane.showInputDialog("Preencha com o tamanho da janela", "25"));
 				panelDaImagem_ef.intensidade_geral(panelDaImagem1.largura, panelDaImagem1.altura,
 						panelDaImagem1.matrizImagem,w,sigma);
 
-				lblFiltro.setText("ITF Sigmoide - Transferência de Intensidade Geral");
+				lblFiltro.setText(" Transferência de Intensidade Geral");
 			}
 
 		});
@@ -193,7 +190,6 @@ public class Tela extends JFrame {
 						panelDaImagem1.matrizImagem, w);
 
 				lblFiltro.setText("Transferência de Faixa Dinâmica");
-				lblDica.setText("<html>INFORMAÇÃO: Para a imagem ser melhorada Tmin deveria estar 1 e tom máximo, Tmax, em 255. Isto é, ao invés de apenas ser representada no pequeno intervalo (Tmax-Tmin) deveria cobrir todo o intervalo 255.</html>");
 			}
 
 		});
@@ -208,8 +204,8 @@ public class Tela extends JFrame {
 				panelDaImagem_ef.setBounds(0, 0, 256, 256);
 				panelDaImagem_ef.setVisible(efeitos1);
 				panel_3.add(panelDaImagem_ef);
-				int contraste = 1;
-				int brilho = 1;
+				int contraste = 2;
+				int brilho = 2;
 				contraste = Integer
 						.parseInt(JOptionPane.showInputDialog("Adicione um valor para o contraste: ", contraste));
 				brilho = Integer.parseInt(JOptionPane.showInputDialog("Adicione um valor para o brilho: ", brilho));
@@ -250,7 +246,7 @@ public class Tela extends JFrame {
 					plotaMascara(mascara);
 					
 					lblFiltro.setText("Dilatar");
-					lblDica.setText("INFORMAÇÃO: Utilizado para preencher buracos. Permite conectar componentes próximos.");
+					
 				} catch (Exception e) {
 					JOptionPane.showMessageDialog(null, "O valor de entrada deve ser um inteiro!");
 				}
@@ -279,7 +275,7 @@ public class Tela extends JFrame {
 					plotaMascara(mascara);
 					
 					lblFiltro.setText("Erodir");
-					lblDica.setText("INFORMAÇÃO: Utilizado para aumentar buracos. Permite a separação de componentes conectados.");
+					
 				} catch (Exception e) {
 					JOptionPane.showMessageDialog(null, "O valor de entrada deve ser um inteiro!");
 				}
@@ -291,7 +287,6 @@ public class Tela extends JFrame {
 		gradienteMor.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				limpaInformacoes();
-
 				mor = true;
 				panelDaImagem_mor.setVisible(mor);
 				panelDaImagem_mor.setBounds(0, 0, 256, 256);
@@ -300,14 +295,13 @@ public class Tela extends JFrame {
 				try {
 					BufferedImage erosao = converterBuffered(panelDaImagem1.matrizImagem);
 					erosao = panelDaImagem_mor.erodir(erosao, CROSS);
-					
 					BufferedImage dilatacao = converterBuffered(panelDaImagem1.matrizImagem);
 					dilatacao = panelDaImagem_mor.dilatar(dilatacao, CROSS);
 					
 					panelDaImagem_mor.subtract(dilatacao, erosao);
 					
 					lblFiltro.setText("Gradiente Morfologico");
-					lblDica.setText("<html>INFORMAÇÃO: Enfatiza as transições marcadas nos níveis de cinza da imagem de entrada. Tendem a depender menos da direção das bordas em comparação com Sobel.</html>");
+				
 				} catch (Exception e) {
 					JOptionPane.showMessageDialog(null, "Erro inesperado!");
 				}
@@ -333,8 +327,7 @@ public class Tela extends JFrame {
 					parcial = panelDaImagem_mor.abertura(parcial, timesInt, CROSS);
 					
 					lblFiltro.setText("Abertura");
-					lblDica.setText("<html>INFORMAÇÃO: A abertura elimina pequenos componentes e suaviza o contorno. Deste modo, a abertura de A por B consiste na erosão de A por B\r\n" + 
-							"seguida da dilatação do resultado por B.<html>");
+					
 				} catch (Exception e) {
 					JOptionPane.showMessageDialog(null, "O valor de entrada deve ser um inteiro!");
 				}
@@ -358,10 +351,9 @@ public class Tela extends JFrame {
 					
 					BufferedImage parcial = converterBuffered(panelDaImagem1.matrizImagem);
 					parcial = panelDaImagem_mor.fechamento(parcial,timesInt,CROSS);
-					
+	
 					lblFiltro.setText("Fechamento");
-					lblDica.setText("<html>INFORMAÇÃO: O fechamento fecha pequenos buracos e conecta componentes. Deste modo, o fechamento de A por B consiste na dilatação de A por\r\n" + 
-							"B seguida da erosão do resultado por B.</html>");
+					
 				} catch (Exception e) {
 					JOptionPane.showMessageDialog(null, "O valor de entrada deve ser um inteiro!");
 				}
@@ -383,15 +375,15 @@ public class Tela extends JFrame {
 					BufferedImage imagem = converterBuffered(panelDaImagem1.matrizImagem);
 					BufferedImage abertura = converterBuffered(panelDaImagem1.matrizImagem);
 
-					String times = JOptionPane.showInputDialog("Preencha com o número de vezes que deseja aplicar", "1");
-					int timesInt = Integer.parseInt(times);
+					String x = JOptionPane.showInputDialog("Preencha com o número de vezes que deseja aplicar", "20");
+					int xInt = Integer.parseInt(x);
 					
 					//abertura primeiro
-					abertura = panelDaImagem_mor.abertura(abertura, timesInt, CROSS);
+					abertura = panelDaImagem_mor.abertura(abertura, xInt, CROSS);
 					panelDaImagem_mor.subtract(imagem, abertura);
 					
 					lblFiltro.setText("Top-Hat");
-					lblDica.setText("INFORMAÇÃO: Enfatizar  o  detalhe  na  presença  desombreamento.");
+					
 				} catch (Exception e) {
 					JOptionPane.showMessageDialog(null, "O valor de entrada deve ser um inteiro!");
 				}
@@ -413,7 +405,7 @@ public class Tela extends JFrame {
 					BufferedImage imagem = converterBuffered(panelDaImagem1.matrizImagem);
 					BufferedImage fechamento = converterBuffered(panelDaImagem1.matrizImagem);
 					
-					String times = JOptionPane.showInputDialog("Preencha com o número de vezes que deseja aplicar", "2");
+					String times = JOptionPane.showInputDialog("Preencha com o número de vezes que deseja aplicar", "20");
 					int timesInt = Integer.parseInt(times);
 					
 					//fechamento primeiro
@@ -421,7 +413,7 @@ public class Tela extends JFrame {
 					panelDaImagem_mor.subtract(fechamento, imagem);
 					
 					lblFiltro.setText("Bottom-Hat");
-					lblDica.setText("INFORMAÇÃO: Enfatizar  o  detalhe  na  presença  desombreamento.");
+					
 				} catch (Exception e) {
 					JOptionPane.showMessageDialog(null, "O valor de entrada deve ser um inteiro!");
 				}
@@ -460,7 +452,7 @@ public class Tela extends JFrame {
 					plotaMascara(mascara);
 					
 					lblFiltro.setText("Dilatação");
-					lblDica.setText("INFORMAÇÃO: Utilizado para preencher buracos. Permite conectar componentes próximos.");
+					
 				} catch (Exception e) {
 					JOptionPane.showMessageDialog(null, "Estouro no array!");
 				}
@@ -496,7 +488,7 @@ public class Tela extends JFrame {
 					plotaMascara(mascara);
 					
 					lblFiltro.setText("Erosão");
-					lblDica.setText("INFORMAÇÃO: Tende a aumentar buracos. Permite a separação de componentes conectados.");
+					
 				} catch (Exception e) {
 					JOptionPane.showMessageDialog(null, "Estouro no array!");
 				}
@@ -532,8 +524,7 @@ public class Tela extends JFrame {
 					plotaMascara(mascara);
 					
 					lblFiltro.setText("Fechamento");
-					lblDica.setText("<html>INFORMAÇÃO: O fechamento fecha pequenos buracos e conecta componentes. Deste modo, o fechamento de A por B consiste na dilatação de A por\r\n" + 
-							"B seguida da erosão do resultado por B.</html>");
+					
 				} catch (Exception e) {
 					JOptionPane.showMessageDialog(null, "Estouro no array!");
 				}
@@ -569,8 +560,7 @@ public class Tela extends JFrame {
 					plotaMascara(mascara);
 					
 					lblFiltro.setText("Abertura");
-					lblDica.setText("<html>INFORMAÇÃO: A abertura elimina pequenos componentes e suaviza o contorno. Deste modo, a abertura de A por B consiste na erosão de A por B\r\n" + 
-							"seguida da dilatação do resultado por B.<html>");
+					
 				} catch (Exception e) {
 					JOptionPane.showMessageDialog(null, "Estouro no array!");
 				}
@@ -607,7 +597,7 @@ public class Tela extends JFrame {
 					plotaMascara(mascara);
 					
 					lblFiltro.setText("Hit-Or-Miss");
-					lblDica.setText("INFORMAÇÃO: ");
+				
 				} catch (Exception e) {
 					JOptionPane.showMessageDialog(null, "Estouro no array!");
 				}
@@ -644,7 +634,7 @@ public class Tela extends JFrame {
 					plotaMascara(mascara);
 					
 					lblFiltro.setText("Contorno Externo");
-					lblDica.setText("INFORMAÇÃO: Exibe a borda externa da imagem após uma dilatação.");
+					
 				} catch (Exception e) {
 					JOptionPane.showMessageDialog(null, "Estouro no array!");
 				}
@@ -680,7 +670,7 @@ public class Tela extends JFrame {
 					plotaMascara(mascara);
 					
 					lblFiltro.setText("Contorno Interno");
-					lblDica.setText("INFORMAÇÃO: Exibe a borda real da imagem retirando o resultado da erosão.");
+					
 				} catch (Exception e) {
 					JOptionPane.showMessageDialog(null, "Estouro no array!");
 				}
@@ -716,7 +706,7 @@ public class Tela extends JFrame {
 					plotaMascara(mascara);
 					
 					lblFiltro.setText("Gradiente Morfológico");
-					lblDica.setText("<html>INFORMAÇÃO: Enfatiza as transições marcadas da imagem de entrada.</html>");
+					
 				} catch (Exception e) {
 					JOptionPane.showMessageDialog(null, "Estouro no array!");
 				}
@@ -794,35 +784,6 @@ public class Tela extends JFrame {
 		panelDaImagem4.setVisible(true);
 		panel_4.add(panelDaImagem4);
 
-		JButton btAbrirImagem2 = new JButton("Abrir Imagem");
-		btAbrirImagem2.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				try {
-
-					// Instanciacao de fileChooser e alteracao do diretorio para buscar a imagem
-					final JFileChooser fileChooser = new JFileChooser();
-					fileChooser.setCurrentDirectory(new File("src/"));
-
-					// Verificacao do fileChooser
-					if (fileChooser.showOpenDialog(btAbrirImagem2) == JFileChooser.APPROVE_OPTION) {
-						// Cria um file onde eh armazenada a imagem
-						File file = fileChooser.getSelectedFile();
-
-						panelDaImagem2.colocaImagemNoPainel(file.getPath());
-						panelDaImagem2.plotaPixels(panel_Pontos_2);
-						apresenta2Imagem();
-						repaint();
-						validate();
-					}
-
-				} catch (Exception erro) {
-					JOptionPane.showMessageDialog(null, "Não foi possivel carregar a imagem.");
-				}
-			}
-		});
-
-		btAbrirImagem2.setBounds(450, 403, 131, 33);
-		painelPrincipal.add(btAbrirImagem2); 
 
 		lblNewLabel.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		lblNewLabel.setBounds(743, 406, 163, 24);
